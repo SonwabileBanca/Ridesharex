@@ -9,32 +9,34 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+    restart: always
 
   backend:
-    build: ./backend
+    image: ridesharex-backend:latest  # Replace with your built image or registry path
     ports:
       - "5000:5000"
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/ridesharex
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/ridesharex
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      FRONTEND_URL: https://yourdomain.com
     depends_on:
       - postgres
-    restart: unless-stopped
+    restart: always
 
   frontend:
-    build: ./frontend
+    image: ridesharex-frontend:latest  # Replace with your built image or registry path
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://localhost:5000
+      VITE_API_URL: https://yourdomain.com/api
+      VITE_GA_TRACKING_ID: ${GA_TRACKING_ID}
     depends_on:
       - backend
-    restart: unless-stopped
+    restart: always
 
   nginx:
     image: nginx:alpine
@@ -42,11 +44,13 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - frontend
       - backend
-    restart: unless-stopped
+    restart: always
 
 volumes:
   postgres_data:
+
